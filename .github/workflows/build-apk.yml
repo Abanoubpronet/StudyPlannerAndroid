@@ -19,15 +19,15 @@ jobs:
           mkdir build-src
           unzip -q StudyPlannerAndroid.zip -d build-src
 
-      - name: Find project
+      - name: Find Android project
         run: |
-          GRADLEW=$(find build-src -name gradlew -type f | head -n 1)
-          if [ -z "$GRADLEW" ]; then
-            echo "gradlew not found"
+          PROJECT_DIR=$(dirname "$(find build-src -name 'build.gradle' -o -name 'build.gradle.kts' | head -n 1)")
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Android project not found"
             exit 1
           fi
-          echo "GRADLEW=$GRADLEW" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(dirname "$GRADLEW")" >> $GITHUB_ENV
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          echo "Project found at: $PROJECT_DIR"
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -35,15 +35,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Make Gradle executable
-        run: chmod +x "$GRADLEW"
-
       - name: Build APK
         working-directory: ${{ env.PROJECT_DIR }}
-        run: ./gradlew assembleDebug
+        run: gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: StudyPlanner-APK
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
+          path: '**/build/outputs/apk/debug/*.apk'
